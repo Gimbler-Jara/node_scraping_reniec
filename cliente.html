@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultar DNI - Cliente</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-container {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+
+        .result-container h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .result-item {
+            margin-bottom: 10px;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .result-value {
+            color: #333;
+            font-size: 16px;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            word-break: break-word;
+        }
+
+        .raw-data {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .raw-data-toggle {
+            background: #e0e0e0;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee;
+            border-left: 4px solid #f44336;
+            color: #d32f2f;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .success {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Consulta de DNI</h1>
+        
+        <div class="form-group">
+            <label for="dniInput">Número de DNI:</label>
+            <input 
+                type="text" 
+                id="dniInput" 
+                placeholder="Ingrese el DNI (8 dígitos)"
+                maxlength="8"
+                pattern="[0-9]{8}"
+                title="Debe contener exactamente 8 dígitos numéricos"
+                value="07309454"
+            >
+        </div>
+        
+        <button id="consultarBtn">Consultar DNI</button>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Consultando información...</p>
+        </div>
+        
+        <div class="result-container" id="resultContainer">
+            <h3>Resultados de la Consulta</h3>
+            <div class="result-grid" id="resultGrid">
+                <!-- Los resultados se mostrarán aquí dinámicamente -->
+            </div>
+            
+            <button class="raw-data-toggle" id="rawDataToggle">Ver datos en bruto</button>
+            <div class="raw-data" id="rawData"></div>
+        </div>
+        
+        <div class="error" id="errorMessage">
+            <strong>Error:</strong> <span id="errorText"></span>
+        </div>
+        
+        <div class="success" id="successMessage">
+            <strong>¡Éxito!</strong> <span id="successText"></span>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dniInput = document.getElementById('dniInput');
+            const consultarBtn = document.getElementById('consultarBtn');
+            const loading = document.getElementById('loading');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultGrid = document.getElementById('resultGrid');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            const errorText = document.getElementById('errorText');
+            const successText = document.getElementById('successText');
+            const rawData = document.getElementById('rawData');
+            const rawDataToggle = document.getElementById('rawDataToggle');
+
+            let rawJsonData = null;
+
+            // Validar DNI en tiempo real
+            dniInput.addEventListener('input', function() {
+                const dni = dniInput.value.trim();
+                const isValid = /^\d{8}$/.test(dni);
+                
+                if (dni && !isValid) {
+                    dniInput.style.borderColor = '#f44336';
+                } else {
+                    dniInput.style.borderColor = '#e0e0e0';
+                }
+            });
+
+            consultarBtn.addEventListener('click', async function() {
+                const dni = dniInput.value.trim();
+                
+                // Validar DNI
+                if (!/^\d{8}$/.test(dni)) {
+                    showError('Por favor ingrese un DNI válido de 8 dígitos');
+                    return;
+                }
+                
+                // Mostrar loading, ocultar otros elementos
+                loading.style.display = 'block';
+                resultContainer.style.display = 'none';
+                errorMessage.style.display = 'none';
+                successMessage.style.display = 'none';
+                consultarBtn.disabled = true;
+                
+                try {
+                    console.log(`Consultando DNI: ${dni}`);
+                    const response = await fetch(`http://localhost:3000/get?dni=${dni}`);
+                    
+                    console.log('Respuesta recibida, estado:', response.status);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log('Datos recibidos:', data);
+                    
+                    // Guardar datos en bruto
+                    rawJsonData = data;
+                    rawData.textContent = JSON.stringify(data, null, 2);
+                    
+                    // Ocultar loading
+                    loading.style.display = 'none';
+                    
+                    if (data.error) {
+                        showError(data.error);
+                    } else {
+                        displayResults(data);
+                        showSuccess('Consulta completada exitosamente');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    loading.style.display = 'none';
+                    showError(`Error al consultar: ${error.message}`);
+                } finally {
+                    consultarBtn.disabled = false;
+                }
+            });
+
+            // Toggle para mostrar/ocultar datos en bruto
+            rawDataToggle.addEventListener('click', function() {
+                if (rawData.style.display === 'none' || rawData.style.display === '') {
+                    rawData.style.display = 'block';
+                    rawDataToggle.textContent = 'Ocultar datos en bruto';
+                } else {
+                    rawData.style.display = 'none';
+                    rawDataToggle.textContent = 'Ver datos en bruto';
+                }
+            });
+
+            function displayResults(data) {
+                resultGrid.innerHTML = '';
+                
+                // Primero, verifica si data es realmente un objeto
+                if (!data || typeof data !== 'object') {
+                    showError('Los datos recibidos no son válidos');
+                    return;
+                }
+                
+                console.log('Mostrando resultados para:', data);
+                
+                // Lista de campos comunes en respuestas de DNI
+                const fieldMappings = {
+                    'dni': 'DNI',
+                    'numero': 'Número',
+                    'nombres': 'Nombres',
+                    'apellido_paterno': 'Apellido Paterno',
+                    'apellido_materno': 'Apellido Materno',
+                    'apellidos': 'Apellidos',
+                    'nombre_completo': 'Nombre Completo',
+                    'fecha_nacimiento': 'Fecha de Nacimiento',
+                    'sexo': 'Sexo',
+                    'estado_civil': 'Estado Civil',
+                    'ubigeo': 'Ubigeo',
+                    'departamento': 'Departamento',
+                    'provincia': 'Provincia',
+                    'distrito': 'Distrito',
+                    'direccion': 'Dirección',
+                    'success': 'Éxito',
+                    'message': 'Mensaje',
+                    'data': 'Datos',
+                    'codigo': 'Código',
+                    'descripcion': 'Descripción'
+                };
+
+                // Recorrer todas las propiedades del objeto de respuesta
+                let hasData = false;
+                
+                // Si data.data existe y es un objeto, mostrar esos datos primero
+                if (data.data && typeof data.data === 'object') {
+                    displayObject(data.data, '');
+                    hasData = true;
+                }
+                
+                // Mostrar otras propiedades del objeto principal
+                for (const [key, value] of Object.entries(data)) {
+                    if (key !== 'data') { // Ya mostramos data arriba
+                        displayField(key, value);
+                        hasData = true;
+                    }
+                }
+                
+                if (!hasData) {
+                    // Si no hay datos formateados, mostrar todo como texto
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'result-item';
+                    resultItem.innerHTML = `
+                        <div class="result-label">Respuesta completa:</div>
+                        <div class="result-value">${JSON.stringify(data)}</div>
+                    `;
+                    resultGrid.appendChild(resultItem);
+                }
+                
+                resultContainer.style.display = 'block';
+                
+                // Hacer scroll suave a los resultados
+                resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                // Funciones auxiliares
+                function displayField(key, value) {
+                    if (value === null || value === undefined || value === '') {
+                        return;
+                    }
+                    
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'result-item';
+                    
+                    const label = document.createElement('div');
+                    label.className = 'result-label';
+                    
+                    // Usar el nombre mapeado si existe, si no formatear la clave
+                    const displayKey = fieldMappings[key] || formatKey(key);
+                    label.textContent = displayKey + ':';
+                    
+                    const valueDiv = document.createElement('div');
+                    valueDiv.className = 'result-value';
+                    
+                    if (typeof value === 'object') {
+                        valueDiv.textContent = JSON.stringify(value);
+                    } else {
+                        valueDiv.textContent = String(value);
+                    }
+                    
+                    resultItem.appendChild(label);
+                    resultItem.appendChild(valueDiv);
+                    resultGrid.appendChild(resultItem);
+                }
+                
+                function displayObject(obj, prefix) {
+                    for (const [key, value] of Object.entries(obj)) {
+                        displayField(prefix + key, value);
+                    }
+                }
+                
+                function formatKey(key) {
+                    return key.replace(/_/g, ' ')
+                            .split(' ')
+                            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                            .join(' ');
+                }
+            }
+
+            function showError(message) {
+                errorText.textContent = message;
+                errorMessage.style.display = 'block';
+                resultContainer.style.display = 'none';
+            }
+
+            function showSuccess(message) {
+                successText.textContent = message;
+                successMessage.style.display = 'block';
+            }
+
+            // Permitir consultar con Enter
+            dniInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    consultarBtn.click();
+                }
+            });
+            
+            // Consultar automáticamente al cargar la página
+            // consultarBtn.click();
+        });
+    </script>
+</body>
+</html>
