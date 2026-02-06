@@ -19,7 +19,7 @@ async function initializeBrowser() {
     
     try {
         const { browser, page } = await connect({
-            headless: false, // Cambia a true para producción
+            headless: true, // En servidor usa headless
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -31,26 +31,28 @@ async function initializeBrowser() {
             ],
             customConfig: {},
             turnstile: true,
-            connectOptions: {},
+            connectOptions: {
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+            },
             disableXvfb: false,
         });
         
         pageglobal = page;
         
         // Configurar user-agent real
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        await pageglobal.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
         
         // Configurar viewport
-        await page.setViewport({ width: 1366, height: 768 });
+        await pageglobal.setViewport({ width: 1366, height: 768 });
         
         console.log('Navegando a la página...');
-        await page.goto('https://eldni.consultadatosreniec.online/', {
+        await pageglobal.goto('https://eldni.consultadatosreniec.online/', {
             waitUntil: 'networkidle2',
             timeout: 30000
         });
         
         // Esperar a que cargue el captcha
-        await page.waitForSelector('[name="cf-turnstile-response"]', { 
+        await pageglobal.waitForSelector('[name="cf-turnstile-response"]', { 
             timeout: 15000 
         }).catch(() => {
             console.log('Captcha no encontrado, continuando...');
